@@ -1,0 +1,2 @@
+slackclient==2.9.3
+google-api-python-client==2.39.0

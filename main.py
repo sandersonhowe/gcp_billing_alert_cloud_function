@@ -5,14 +5,13 @@ import slack
 from slack.errors import SlackApiError
 from googleapiclient import discovery
 
-# budget id: fc1f3a9f-9df0-45f1-8cd2-b68e58174e03
-# topic: buget-trigger
-
+# SETTINGS
+# --------------------------------------------------------------------------------
 # See https://api.slack.com/docs/token-types#bot for more info
+
 # SH internal slack account
 BOT_ACCESS_TOKEN = 'xoxb-2304342086610-3196957901361-b4pR4V6OhcISQavrY7ar5bIP'
 CHANNEL = 'C03642N6P1N'
-
 slack_client = slack.WebClient(token=BOT_ACCESS_TOKEN)
 
 # Clients slack account
@@ -20,7 +19,7 @@ slack_client = slack.WebClient(token=BOT_ACCESS_TOKEN)
 # CLIENT_CHANNEL = 'C0xxxxxxxxx'
 # client_slack_client = slack.WebClient(token=CLIENT_BOT_ACCESS_TOKEN)
 
-# slack notifcation
+# SLACK NOTIFCATION
 # -------------------------------------------------------------------------------
 def notify_slack(data, context):
     pubsub_message = data
@@ -85,8 +84,8 @@ def notify_slack(data, context):
         #     print('Error posting to Slack')
 
 
-# KILL EVERYTHING SWITCH
-# NOTE: test the kill function works as intended
+# KILL SWITCH
+# NOTE: test this function works as intended
 # -------------------------------------------------------------------------------
 PROJECT_ID = os.getenv('GCP_PROJECT')
 PROJECT_NAME = f'projects/{PROJECT_ID}'

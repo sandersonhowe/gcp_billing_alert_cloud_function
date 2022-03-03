@@ -9,10 +9,16 @@ from googleapiclient import discovery
 # topic: buget-trigger
 
 # See https://api.slack.com/docs/token-types#bot for more info
+# SH internal slack account
 BOT_ACCESS_TOKEN = 'xoxb-2304342086610-3196957901361-b4pR4V6OhcISQavrY7ar5bIP'
 CHANNEL = 'C03642N6P1N'
 
 slack_client = slack.WebClient(token=BOT_ACCESS_TOKEN)
+
+# Clients slack account
+# CLIENT_BOT_ACCESS_TOKEN = ''
+# CLIENT_CHANNEL = 'C0xxxxxxxxx'
+# client_slack_client = slack.WebClient(token=CLIENT_BOT_ACCESS_TOKEN)
 
 # slack notifcation
 # -------------------------------------------------------------------------------
@@ -54,6 +60,7 @@ def notify_slack(data, context):
     
     # only show if there is an threshold breached
     if budget_notification_text is not None:
+        # SH slack
         try:
             slack_client.api_call(
                 'chat.postMessage',
@@ -65,8 +72,21 @@ def notify_slack(data, context):
         except SlackApiError:
             print('Error posting to Slack')
 
+        # client slack
+        # try:
+        #     client_slack_client.api_call(
+        #         'chat.postMessage',
+        #         json={
+        #             'channel': CLIENT_CHANNEL,
+        #             'text'   : budget_notification_text
+        #         }
+        #     )
+        # except SlackApiError:
+        #     print('Error posting to Slack')
 
-# kill EVERYTHING switch
+
+# KILL EVERYTHING SWITCH
+# NOTE: test the kill function works as intended
 # -------------------------------------------------------------------------------
 PROJECT_ID = os.getenv('GCP_PROJECT')
 PROJECT_NAME = f'projects/{PROJECT_ID}'

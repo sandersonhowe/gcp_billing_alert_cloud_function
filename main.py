@@ -7,6 +7,13 @@ from googleapiclient import discovery
 
 # SETTINGS
 # --------------------------------------------------------------------------------
+TEST_MODE = True # True = Will check if the script can kill the billing account without killing the billing account
+KILL_BOT = True # True = kill the billing account if over threash hold, otherwise it will just increase it's warning levels
+THRESHOLD_WARNING = 1.2 # Increase warning level at
+THRESHOLD_KILL = 1.4 # kill billing account at
+
+
+# SLACK
 # See https://api.slack.com/docs/token-types#bot for more info
 
 # SH internal slack account
@@ -19,7 +26,7 @@ slack_client = slack.WebClient(token=BOT_ACCESS_TOKEN)
 # CLIENT_CHANNEL = 'C0xxxxxxxxx'
 # client_slack_client = slack.WebClient(token=CLIENT_BOT_ACCESS_TOKEN)
 
-# SLACK NOTIFCATION
+# SLACK NOTIFCATION AND FUNCTION ENTRY
 # -------------------------------------------------------------------------------
 def notify_slack(data, context):
     pubsub_message = data
@@ -41,20 +48,32 @@ def notify_slack(data, context):
     # You can modify and format the message to meet your needs
     data = json.loads(notification_data)
     
-    # catch over budget
-    if data['costAmount'] > data['budgetAmount']:
-        budget_notification_text = f':warning: BUDGET WARNING! :warning:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+    # tests
+    if TEST_MODE:
+        if data['costAmount'] > data['budgetAmount']:
+            if stop_billing_test():
+                budget_notification_text = f':white_check_mark: TEST MODE PASSED: ACCOUNT CAN BE LOCKED DOWN :white_check_mark:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+            else:
+                budget_notification_text = f':warning: TEST MODE FAILED: CHECK LOGS :warning:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+    else:
+        # catch over budget
+        if data['costAmount'] > data['budgetAmount']:
+            budget_notification_text = f':warning: BUDGET WARNING! :warning:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
 
-    # catch over budget and almost at kill threashold
-    if data['costAmount'] > data['budgetAmount'] * 1.2:
-        budget_notification_text = f':rotating_light: BUDGET KILL THRESHOLD IMMINENT! :rotating_light:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+        # catch over budget and almost at kill threashold
+        if data['costAmount'] > data['budgetAmount'] * THRESHOLD_WARNING:
+            budget_notification_text = f':rotating_light: BUDGET KILL THRESHOLD IMMINENT! :rotating_light:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
 
-    # kill threashold hit, stop billing
-    if data['costAmount'] > data['budgetAmount'] * 1.4:
-        # stopped = stop_billing_test() # test
-        stopped = stop_billing() # live
-        if stopped:
-            budget_notification_text = f':boom: ACCOUNT HAS BEEN LOCKED DOWN! :boom:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+        # kill threashold hit, stop billing
+        if data['costAmount'] > data['budgetAmount'] * THRESHOLD_KILL:
+            if KILL_BOT:
+                if stop_billing():
+                    budget_notification_text = f':lock: ACCOUNT HAS BEEN LOCKED DOWN! :lock:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+                else:
+                    budget_notification_text = f':boom: ACCOUNT LOCKED FAILED! :boom:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+            else:
+                budget_notification_text = f':fire: BUDGET KILL THRESHOLD BREACHED! :fire:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+
   
     
     # only show if there is an threshold breached
@@ -84,8 +103,8 @@ def notify_slack(data, context):
         #     print('Error posting to Slack')
 
 
-# KILL SWITCH
-# NOTE: test this function works as intended
+# KILL BOT SCRIPTS
+# NOTE: test this function works as intended with stop_billing_test()
 # -------------------------------------------------------------------------------
 PROJECT_ID = os.getenv('GCP_PROJECT')
 PROJECT_NAME = f'projects/{PROJECT_ID}'
@@ -93,6 +112,7 @@ PROJECT_NAME = f'projects/{PROJECT_ID}'
 def stop_billing_test():
     if PROJECT_ID is None:
         print('TEST: No project specified with environment variable')
+        return False
     
     billing = discovery.build(
         'cloudbilling',
@@ -105,7 +125,7 @@ def stop_billing_test():
     billing_enabled = __is_billing_enabled(PROJECT_NAME, projects)
 
     if billing_enabled:
-        print('TEST: Billing enabled - stop it')
+        print('TEST: Billing enabled')
         return True
     else:
         print('TEST: Billing already disabled')
@@ -113,18 +133,10 @@ def stop_billing_test():
     return False
 
 # real deal
-def stop_billing(data, context):
-    pubsub_data = base64.b64decode(data['data']).decode('utf-8')
-    pubsub_json = json.loads(pubsub_data)
-    cost_amount = pubsub_json['costAmount']
-    budget_amount = pubsub_json['budgetAmount']
-    if cost_amount <= budget_amount:
-        print(f'No action necessary. (Current cost: {cost_amount})')
-        return
-
+def stop_billing():
     if PROJECT_ID is None:
         print('No project specified with environment variable')
-        return
+        return False
 
     billing = discovery.build(
         'cloudbilling',
@@ -154,14 +166,24 @@ def __is_billing_enabled(project_name, projects):
     @param {string} project_name Name of project to check if billing is enabled
     @return {bool} Whether project has billing enabled or not
     """
+    print('look up billing for: ', project_name)
     try:
         res = projects.getBillingInfo(name=project_name).execute()
         return res['billingEnabled']
     except KeyError:
         # If billingEnabled isn't part of the return, billing is not enabled
         return False
-    except Exception:
-        print('Unable to determine if billing is enabled on specified project, assuming billing is enabled')
+    except Exception as e:
+        print('Unable to determine if billing is enabled on specified project, assuming billing is enabled but unreachabe. DANGER: Check Bot permissions, it might not be able to disable the account.')
+        print('Check you have the Billing API turned on: https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project='+PROJECT_ID)
+        print('You may also need to recreate the service account as it can stop working after the script has locked your acocunt.')
+        print(e)
+
+        # return False for test mode so we can fix the permission errors
+        if TEST_MODE:
+            return False
+
+        # if LIVE, presume it works and try to shut down service anyway.
         return True
 
 
@@ -175,6 +197,7 @@ def __disable_billing_for_project(project_name, projects):
         res = projects.updateBillingInfo(name=project_name, body=body).execute()
         print(f'Billing disabled: {json.dumps(res)}')
         return True
-    except Exception:
+    except Exception as e:
         print('Failed to disable billing, possibly check permissions')
+        print(e)
         return False

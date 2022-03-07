@@ -7,16 +7,24 @@ from googleapiclient import discovery
 
 # SETTINGS
 # --------------------------------------------------------------------------------
-TEST_MODE = True # True = Will check if the script can kill the billing account without killing the billing account
-KILL_BOT = True # True = kill the billing account if over threash hold, otherwise it will just increase it's warning levels
-THRESHOLD_WARNING = 1.2 # Increase warning level at
-THRESHOLD_KILL = 1.4 # kill billing account at
+# PROJECT
+PROJECT_NAME = "IDENTIFY API" # name for alerts
+PROJECT_ACCOUNT = "staging" # staging / production
 
+# BOT
+TEST_MODE = True # True = Will check if the script can kill the billing account without killing the billing account
+KILL_BOT = True # True = kill the billing account if over THRESHOLD_KILL, otherwise it will just increase it's warning levels
+THRESHOLD_WARNING = 1.2 # Increase warning level at
+THRESHOLD_KILL = 1.4 # kill billing account at or increase warning level
+
+# GCP
+PROJECT_ID = os.getenv('GCP_PROJECT') # set this as a enviroment var in GCP
+PROJECT_NAME = f'projects/{PROJECT_ID}'
 
 # SLACK
 # See https://api.slack.com/docs/token-types#bot for more info
 
-# SH internal slack account
+# Your slack account
 BOT_ACCESS_TOKEN = 'xoxb-2304342086610-3196957901361-b4pR4V6OhcISQavrY7ar5bIP'
 CHANNEL = 'C03642N6P1N'
 slack_client = slack.WebClient(token=BOT_ACCESS_TOKEN)
@@ -48,31 +56,31 @@ def notify_slack(data, context):
     # You can modify and format the message to meet your needs
     data = json.loads(notification_data)
     
-    # tests
+    # test the account can actually delete the billing account
     if TEST_MODE:
         if data['costAmount'] > data['budgetAmount']:
             if stop_billing_test():
-                budget_notification_text = f':white_check_mark: TEST MODE PASSED: ACCOUNT CAN BE LOCKED DOWN :white_check_mark:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+                budget_notification_text = f':white_check_mark: TEST MODE PASSED: ACCOUNT CAN BE LOCKED DOWN :white_check_mark:\n*Account*: {PROJECT_NAME} - {PROJECT_ACCOUNT}\n```{notification_attr}, {notification_data}```'
             else:
-                budget_notification_text = f':warning: TEST MODE FAILED: CHECK LOGS :warning:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
-    else:
+                budget_notification_text = f':warning: TEST MODE FAILED: CHECK LOGS :warning:\n*Account*: {PROJECT_NAME} - {PROJECT_ACCOUNT}\n```{notification_attr}, {notification_data}```'
+    else: # live
         # catch over budget
         if data['costAmount'] > data['budgetAmount']:
-            budget_notification_text = f':warning: BUDGET WARNING! :warning:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+            budget_notification_text = f':warning: BUDGET WARNING! :warning:\n*Account*: {PROJECT_NAME} - {PROJECT_ACCOUNT}\n```{notification_attr}, {notification_data}```'
 
         # catch over budget and almost at kill threashold
         if data['costAmount'] > data['budgetAmount'] * THRESHOLD_WARNING:
-            budget_notification_text = f':rotating_light: BUDGET KILL THRESHOLD IMMINENT! :rotating_light:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+            budget_notification_text = f':rotating_light: BUDGET KILL THRESHOLD IMMINENT! :rotating_light:\n*Account*: {PROJECT_NAME} - {PROJECT_ACCOUNT}\n```{notification_attr}, {notification_data}```'
 
         # kill threashold hit, stop billing
         if data['costAmount'] > data['budgetAmount'] * THRESHOLD_KILL:
             if KILL_BOT:
                 if stop_billing():
-                    budget_notification_text = f':lock: ACCOUNT HAS BEEN LOCKED DOWN! :lock:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+                    budget_notification_text = f':lock: ACCOUNT HAS BEEN LOCKED DOWN! :lock:\n*Account*: {PROJECT_NAME} - {PROJECT_ACCOUNT}\n```{notification_attr}, {notification_data}```'
                 else:
-                    budget_notification_text = f':boom: ACCOUNT LOCKED FAILED! :boom:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+                    budget_notification_text = f':boom: ACCOUNT LOCKED FAILED! :boom:\n*Account*: {PROJECT_NAME} - {PROJECT_ACCOUNT}\n```{notification_attr}, {notification_data}```'
             else:
-                budget_notification_text = f':fire: BUDGET KILL THRESHOLD BREACHED! :fire:\nAccount: IDENTIFY API\n```{notification_attr}, {notification_data}```'
+                budget_notification_text = f':fire: BUDGET KILL THRESHOLD BREACHED! :fire:\n*Account*: {PROJECT_NAME} - {PROJECT_ACCOUNT}\n```{notification_attr}, {notification_data}```'
 
   
     
@@ -106,9 +114,6 @@ def notify_slack(data, context):
 # KILL BOT SCRIPTS
 # NOTE: test this function works as intended with stop_billing_test()
 # -------------------------------------------------------------------------------
-PROJECT_ID = os.getenv('GCP_PROJECT')
-PROJECT_NAME = f'projects/{PROJECT_ID}'
-
 def stop_billing_test():
     if PROJECT_ID is None:
         print('TEST: No project specified with environment variable')
@@ -128,7 +133,7 @@ def stop_billing_test():
         print('TEST: Billing enabled')
         return True
     else:
-        print('TEST: Billing already disabled')
+        print('TEST: Billing already disabled or not found')
     
     return False
 
@@ -179,11 +184,11 @@ def __is_billing_enabled(project_name, projects):
         print('You may also need to recreate the service account as it can stop working after the script has locked your acocunt.')
         print(e)
 
-        # return False for test mode so we can fix the permission errors
+        # return False for test mode so you can try and fix the permission errors
         if TEST_MODE:
             return False
 
-        # if LIVE, presume it works and try to shut down service anyway.
+        # if LIVE, presume it might work and try to shut down service anyway.
         return True
 
 

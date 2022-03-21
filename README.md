@@ -1,15 +1,15 @@
 # Google Cloud Function for slack billing alert and optional kill switch
-This fuction extends on the function coded provided by google here: https://cloud.google.com/billing/docs/how-to/notify
+This function extends on the function coded provided by google here: https://cloud.google.com/billing/docs/how-to/notify
 
 # What it does
 Monitors your billing alerts and posts warnings to Slack when you breach these thresholds.
-Optionallay locks down your GCP account if you go over a set threshold, effectivly trying to save you from billing run aways.
+Optionally locks down your GCP account if you go over a set threshold, effectively trying to save you from billing runaways.
 
 ## Warning!
-If you use the kill switch, this script will remove the associated Cloud Billing from your project, therefor shutting down all paid resources. Resources might not shut down gracefully, and might be irretrievably deleted. There is no graceful recovery if you disable Cloud Billing.
+If you use the kill switch, this script will remove the associated Cloud Billing from your project, therefore shutting down all paid resources. Resources might not shut down gracefully, and might be irretrievably deleted. There is no graceful recovery if you disable Cloud Billing.
 You can re-enable Cloud Billing, but there is no guarantee of service recovery and manual configuration is required.*
 # Quotas
-We where going to set up a quotas script, but at the time of writing this, the quotas API was still quite Alpha and it's quicker to just set up it in the gui, I strongly suggest you start there by:
+We looked at setting up a quotas script, but at the time of writing this, the quotas API was still quite Alpha and it's quicker to just set up it in the gui, I strongly suggest you start there by:
 
 1. Open your GCP console and make sure your in the right project
 2. Search for “quotas” in the search bar
@@ -34,10 +34,10 @@ Docs: https://cloud.google.com/billing/docs/how-to/notify#cap_disable_billing_to
 
 **Note:** You need to enable the billing API here: https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=xxxx to allow for the bot to drop the billing assoication and do the look up for if billing is enabled.
 
-**Note:** Make sure you create a new service account for the script, becasue after a billing account has been nuked by this script, it seems to loose the service account billing assoication you need for it to work when you rejoin the billing account to the account :( So you will need to create a new one and reset up the cloud function. You can do this by running in TEST_MODE until you get a pass before turning it back on again.
+**Note:** Make sure you create a new service account for the script, because after a billing account has been nuked by this script, it seems to lose the service account billing association you need for it to work when you rejoin the billing account to the account :( So you will need to create a new one and reset up the cloud function. You can do this by running in TEST_MODE until you get a pass before turning it back on again.
 
 ### Testing permissions
-Run it in TEST_MODE while setting up the script to test if your kill script will work with out killing your billing account.
+Run it in TEST_MODE while setting up the script to test if your kill script will work without killing your billing account.
 
 # Provided as is, use at your own risk
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,

@@ -112,7 +112,7 @@ def notify_slack(data, context):
 
 
 # KILL BOT SCRIPTS
-# NOTE: test this function works as intended with stop_billing_test()
+# NOTE: test this function works as intended with TEST_MODE = True
 # -------------------------------------------------------------------------------
 def stop_billing_test():
     if PROJECT_ID is None:

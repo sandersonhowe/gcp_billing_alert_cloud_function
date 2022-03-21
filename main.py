@@ -34,7 +34,7 @@ slack_client = slack.WebClient(token=BOT_ACCESS_TOKEN)
 # CLIENT_CHANNEL = 'C0xxxxxxxxx'
 # client_slack_client = slack.WebClient(token=CLIENT_BOT_ACCESS_TOKEN)
 
-# SLACK NOTIFCATION AND FUNCTION ENTRY
+# SLACK NOTIFCATION AND ENTRY FUNCTION
 # -------------------------------------------------------------------------------
 def notify_slack(data, context):
     pubsub_message = data

@@ -32,6 +32,8 @@ Docs: https://cloud.google.com/billing/docs/how-to/notify#send_notifications_to_
 ### Cloud fucntion
 Docs: https://cloud.google.com/billing/docs/how-to/notify#cap_disable_billing_to_stop_usage
 
+This is written in Python 3 and make sure you name the entry function 'notify_slack'.
+
 **Note:** You need to enable the billing API here: https://console.cloud.google.com/apis/library/cloudbilling.googleapis.com?project=xxxx to allow for the bot to drop the billing assoication and do the look up for if billing is enabled.
 
 **Note:** Make sure you create a new service account for the script, because after a billing account has been nuked by this script, it seems to lose the service account billing association you need for it to work when you rejoin the billing account to the account :( So you will need to create a new one and reset up the cloud function. You can do this by running in TEST_MODE until you get a pass before turning it back on again.

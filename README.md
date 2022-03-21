@@ -1,5 +1,5 @@
 # Google Cloud Function for slack billing alert and optional kill switch
-This function extends on the function coded provided by google here: https://cloud.google.com/billing/docs/how-to/notify
+This function extends on the code provided by google here: https://cloud.google.com/billing/docs/how-to/notify
 
 # What it does
 Monitors your billing alerts and posts warnings to Slack when you breach these thresholds.

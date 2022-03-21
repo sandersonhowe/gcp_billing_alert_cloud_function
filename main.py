@@ -8,7 +8,7 @@ from googleapiclient import discovery
 # SETTINGS
 # --------------------------------------------------------------------------------
 # PROJECT
-PROJECT_NAME = "IDENTIFY API" # name for alerts
+PROJECT_NAME = "My project" # name for alerts
 PROJECT_ACCOUNT = "staging" # staging / production
 
 # BOT
@@ -25,8 +25,8 @@ PROJECT_NAME = f'projects/{PROJECT_ID}'
 # See https://api.slack.com/docs/token-types#bot for more info
 
 # Your slack account
-BOT_ACCESS_TOKEN = 'xoxb-2304342086610-3196957901361-b4pR4V6OhcISQavrY7ar5bIP'
-CHANNEL = 'C03642N6P1N'
+BOT_ACCESS_TOKEN = 'xxxx'
+CHANNEL = 'xxxx'
 slack_client = slack.WebClient(token=BOT_ACCESS_TOKEN)
 
 # Clients slack account

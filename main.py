@@ -14,8 +14,8 @@ PROJECT_ACCOUNT = "staging" # staging / production
 # BOT
 TEST_MODE = True # True = Will check if the script can kill the billing account without killing the billing account
 KILL_BOT = True # True = kill the billing account if over THRESHOLD_KILL, otherwise it will just increase it's warning levels
-THRESHOLD_WARNING = 1.2 # Increase warning level at
-THRESHOLD_KILL = 1.4 # kill billing account at or increase warning level
+THRESHOLD_WARNING = 1.2 # Increase warning level at X times the billing threshold - NOTE: this currently has only been tested with one billing threshold
+THRESHOLD_KILL = 1.4 # kill billing account at or increase warning level 
 
 # GCP
 PROJECT_ID = os.getenv('GCP_PROJECT') # set this as a enviroment var in GCP
